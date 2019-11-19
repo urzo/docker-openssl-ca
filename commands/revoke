@@ -1,0 +1,28 @@
+#!/bin/bash
+
+set -eou pipefail
+IFS=$'\r\n'
+
+source /root/.bashrc
+
+main() {
+  local NAME="${1:?"Require a client certificate NAME"}"
+  local ROOT_DIR="/root/ca/intermediate"
+
+  if [[ ! -r "$ROOT_DIR/certs/$NAME.cert.pem" ]]; then
+    echo "Certificate with name $NAME does not exist."
+    return 1
+  fi
+
+  echo "Revoking certificate $NAME"
+
+  if openssl ca -config "$ROOT_DIR/openssl.cnf" -revoke "$ROOT_DIR/certs/$NAME.cert.pem"; then
+    echo "$NAME revoked"
+    rc-service openssl_ca restart &>/dev/null &
+    return 0
+  else
+    echo "Error revoking $NAME"
+    return 1
+  fi
+}
+main "$@"

@@ -1,0 +1,17 @@
+{
+  "name": "test_openssl_ca",
+  "tmp": {
+    "TEST_OUTPUT": "/tmp/test_output.txt",
+    "TEST_CRT": "/tmp/test.crt.pem",
+    "TEST_CSR": "/tmp/test/csr.pem",
+    "TEST_KEY": "/tmp/test.key.pem",
+    "CA_CRT": "/tmp/ca.crt.pem",
+    "CA_BUNDLE": "/tmp/ca-chain.crt.pem",
+    "INT_CRT": "/tmp/intermediate.crt.pem"
+  },
+  "env": {
+    "DOCKER_PORT": 2560,
+    "DOCKER_IMAGE": "openssl_ca:test"
+  },
+  "root": "."
+}

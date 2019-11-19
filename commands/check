@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -eou pipefail
+IFS=$'\r\n'
+
+source /root/.bashrc
+
+main() {
+  NAME="${1:?"Require a certificate name"}"
+  CERT="/root/ca/intermediate/certs/$NAME.cert.pem"
+  if [[ ! -r "$CERT" ]]; then
+    echo "certificate $NAME does not exist"
+    return 1
+  fi
+  openssl x509 -noout -text -in "$CERT"
+}
+main "$@"

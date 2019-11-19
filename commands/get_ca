@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -eou pipefail
+IFS=$'\r\n'
+
+source /root/.bashrc
+
+main() {
+  cat /root/ca/certs/ca.cert.pem
+  return 0
+}
+main

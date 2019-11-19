@@ -1,0 +1,33 @@
+#!/bin/bash
+
+set -eou pipefail
+IFS=$'\r\n'
+
+source /root/.bashrc
+
+source /root/.bashrc
+
+main() {
+  local NAME="${1:?"Require a certificate name"}"
+  local AGAINST_CHAIN=${2:-"yes"}
+  if [[ ${AGAINST_CHAIN,,} != "yes" ]] && [[ ${AGAINST_CHAIN,,} != "no" ]]; then
+    echo "the second positional argument must be 'yes' or 'no'"
+    return 1
+  fi
+  local ROOT_DIR="/root/ca"
+  local CERT="$ROOT_DIR/intermediate/certs/$NAME.cert.pem"
+  if [[ ! -r "$CERT" ]]; then
+    echo "certificate $NAME does not exist"
+    return 1
+  fi
+  local CA
+  if [[ ${AGAINST_CHAIN,,} == "yes" ]]; then
+    echo "verifying against ca certificate chain"
+    CA="$ROOT_DIR/intermediate/certs/ca-chain.cert.pem"
+  else
+    echo "verifying against root ca certificate"
+    CA="$ROOT_DIR/certs/ca.cert.pem"
+  fi
+  openssl verify -CAfile "$CA" "$CERT"
+}
+main "$@"

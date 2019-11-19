@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -eou pipefail
+IFS=$'\r\n'
+
+source /root/.bashrc
+
+main() {
+  local NAME="${1:?"Require a csr name"}"
+  local CHECK_CA="${2:-"no"}"
+  local ROOT_DIR="/root/ca/intermediate/csr"
+  if [[ ${CHECK_CA,,} == "yes" ]]; then ROOT_DIR="/root/ca/csr"; fi
+  if [[ ! -r "$ROOT_DIR/$NAME.csr.pem" ]]; then
+    echo "certificate signing request $NAME does not exist"
+    return 1
+  fi
+  cat "$ROOT_DIR/$NAME.csr.pem"
+  return 0
+}
+main "$@"

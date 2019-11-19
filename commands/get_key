@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -eou pipefail
+IFS=$'\r\n'
+
+source /root/.bashrc
+
+main() {
+  local NAME="${1:?"Require a key name"}"
+  local ROOT_DIR="/root/ca/intermediate/private"
+  if [[ ! -r "$ROOT_DIR/$NAME.key.pem" ]]; then
+    echo "private key $NAME does not exist"
+    return 1
+  fi
+  cat "$ROOT_DIR/$NAME.key.pem"
+  return 0
+}
+main "$@"

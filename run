@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+set -eou pipefail
+IFS=$'\r\n'
+
+# shellcheck source="./lib.bash"
+source "${0%/*}/lib.bash"
+
+main() {
+  local version="${1:-"latest"}"
+  lib::info "Running openssl_ca docker image with version ${version}"
+  if docker run -d --name openssl_ca -p 2560:2560 openssl_ca:$version; then
+    lib::ok "openssl_ca running"
+    return 0
+  fi
+  lib::warn "there was an error starting the container"
+  return 1
+}
+main "$@"

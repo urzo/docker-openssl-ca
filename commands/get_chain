@@ -1,0 +1,27 @@
+#!/bin/bash
+
+set -eou pipefail
+IFS=$'\r\n'
+
+source /root/.bashrc
+
+main() {
+  local NAME="${1:-"ca-chain"}"
+  local ROOT_DIR="/root/ca/intermediate/certs"
+  local CERT_CHAIN="$ROOT_DIR/ca-chain.cert.pem"
+  local CLIENT_CRT="$ROOT_DIR/$NAME.cert.pem"
+  local INT_CRT="$ROOT_DIR/intermediate.cert.pem"
+
+  if [[ ! -r "$CLIENT_CRT" ]]; then
+    echo "$NAME is not a valid certificate"
+    return 1
+  fi
+
+  if [[ "$ROOT_DIR/$NAME.cert.pem" == "$CERT_CHAIN" ]]; then
+    cat "$CERT_CHAIN"
+  else
+    printf '%s\n%s\n' "$(cat "$CLIENT_CRT")" "$(cat "$CERT_CHAIN")"
+  fi
+  return 0
+}
+main "$@"

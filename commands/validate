@@ -1,0 +1,23 @@
+#!/bin/bash
+
+source /root/.bashrc
+
+set -eou pipefail
+IFS=$'\r\n'
+
+source /root/.bashrc
+
+main() {
+  local NAME="${1:?"Require certificate name to validate"}"
+  local ROOT_DIR="/root/ca/intermediate"
+  local CERT="$ROOT_DIR/certs/${NAME}.cert.pem"
+  if [[ ! -r "$CERT" ]]; then
+    echo "certificate $NAME does not exist"
+    return 1
+  fi
+  openssl ocsp -url http://127.0.0.1:2560 -resp_text \
+    -CAfile "$ROOT_DIR/certs/ca-chain.cert.pem" \
+    -issuer "$ROOT_DIR/certs/intermediate.cert.pem" \
+    -cert "$CERT"
+}
+main "$@"

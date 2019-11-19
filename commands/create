@@ -1,0 +1,59 @@
+#!/bin/bash
+
+set -eou pipefail
+IFS=$'\r\n'
+
+source /root/.bashrc
+
+main() {
+  local NAME="${1:?"Require a client certificate name"}"
+  local RAW_TYPE="${2:-"server"}"
+  local DEFAULT_SUBJECT="/C=US/ST=CA/L=San Francisco/O=NilSoft LLC/OU=NilSoft LLC Web Services lda/CN=$NAME"
+  local SUBJECT="${3:-"$DEFAULT_SUBJECT"}"
+  local TYPE
+
+  if [[ "${RAW_TYPE}" == "server" ]]; then
+    TYPE="server_cert"
+  elif [[ "${RAW_TYPE}" == "client" ]]; then
+    TYPE="usr_cert"
+  fi
+
+  local ROOT_DIR="/root/ca/intermediate"
+  local CERT_CHAIN="${ROOT_DIR}/certs/ca-chain.cert.pem"
+  local CLIENT_KEY="${ROOT_DIR}/private/${NAME}.key.pem"
+  local CLIENT_CSR="${ROOT_DIR}/csr/${NAME}.csr.pem"
+  local CLIENT_CRT="${ROOT_DIR}/certs/${NAME}.cert.pem"
+
+  if [[ -r "$CLIENT_CRT" ]]; then
+    echo "certificate $NAME already exists"
+    return 1
+  fi
+
+  # create server key
+  openssl genrsa -out "$CLIENT_KEY" 2048 &>/dev/null
+  chmod 400 "$CLIENT_KEY"
+
+  # create server certificate signing request
+  openssl req -config "$ROOT_DIR/openssl.cnf" \
+    -key "$CLIENT_KEY" \
+    -new -sha256 \
+    -out "$CLIENT_CSR" \
+    -subj "$SUBJECT" &>/dev/null
+
+  # sign server certificate
+  openssl ca -config "$ROOT_DIR/openssl.cnf" \
+    -extensions "$TYPE" -days 365 -notext -md sha256 -batch \
+    -in "$CLIENT_CSR" \
+    -out "$CLIENT_CRT" &>/dev/null
+  chmod 444 "$CLIENT_CRT"
+
+  if ! openssl verify -CAfile "$CERT_CHAIN" "$CLIENT_CRT" &>/dev/null; then
+    echo "Invalid chain of trust from Server Certificate to the Intermediate and CA Certificates"
+    return 1
+  fi
+
+  rc-service openssl_ca restart &>/dev/null &
+
+  cat "$CLIENT_CRT"
+}
+main "$@"

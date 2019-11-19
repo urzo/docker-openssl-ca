@@ -1,0 +1,61 @@
+__before_each__() {
+  docker run --rm -d --name "${BUT__INSTANCE_NAME}" -p "${DOCKER_PORT}:${DOCKER_PORT}" "${DOCKER_IMAGE}"
+}
+__after_each__() {
+  if [[ -n $(lsof -i :2560 -t) ]]; then
+    kill -15 $(lsof -i :2560 -t)
+  fi
+  docker kill "${BUT__INSTANCE_NAME}"
+  docker rm "${BUT__INSTANCE_NAME}"
+}
+
+exec_cmd() {
+  local cmd="${1:?"Require a command name"}"
+  local args="${2:-""}"
+  docker exec -it "${BUT__INSTANCE_NAME}" "${cmd}" "${args}"
+}
+get_ca_crt() {
+  exec_cmd get_ca >"${CA_CRT}"
+}
+get_ca_bundle() {
+  exec_cmd get_chain >"${CA_BUNDLE}"
+}
+get_int_crt() {
+  exec_cmd get_cert intermediate >"${INT_CRT}"
+}
+
+test_should_start_container() {
+  docker ps | grep -q "${BUT__INSTANCE_NAME}"
+}
+test_should_generate_valid_chain() {
+  get_ca_crt
+  get_ca_bundle
+  openssl verify -verbose -x509_strict -CAfile "${CA_CRT}" "${CA_BUNDLE}"
+}
+test_should_generate_valid_intermediate_certs() {
+  get_ca_crt
+  get_int_crt
+  openssl verify -CAfile "${CA_BUNDLE}" "${INT_CRT}"
+}
+test_should_generate_valid_cert() {
+  exec_cmd create test
+  exec_cmd get_cert test >"${TEST_CRT}"
+  get_ca_bundle
+  get_int_crt
+  openssl verify -CAfile "${CA_BUNDLE}" -untrusted "${INT_CRT}" "${TEST_CRT}"
+}
+test_should_generate_server_cert_with_valid_md5() {
+  exec_cmd create test
+  exec_cmd get_cert test >"${TEST_CRT}"
+  openssl x509 -noout -modulus -in "${TEST_CRT}" | openssl md5
+}
+test_should_generate_server_private_key_with_valid_md5() {
+  exec_cmd create test
+  exec_cmd get_key test >"${TEST_KEY}"
+  openssl rsa -noout -modulus -in "${TEST_KEY}" | openssl md5
+}
+test_should_generate_server_csr_with_valid_md5() {
+  exec_cmd create test
+  exec_cmd get_csr test >"${TEST_CSR}"
+  openssl req -noout -modulus -in "${TEST_CSR}" | openssl md5
+}

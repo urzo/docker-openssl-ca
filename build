@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+set -eou pipefail
+IFS=$'\r\n'
+
+# shellcheck source="./lib.bash"
+source "${0%/*}/lib.bash"
+
+main() {
+  lib::info "building docker image"
+  local version="${1:-"latest"}"
+  local new_version="${version}"
+  if [[ "${version}" != "latest" ]] && [[ "${version}" != "test" ]]; then
+    if [[ "${version}" != "patch" ]] || [[ "${version}" != "minor" ]] || [[ "${version}" != "major" ]]; then
+      lib::warn "version type ${version} is not of string 'major', 'minor', or 'patch'. Exiting..."
+      return 1
+    fi
+    local current_version
+    current_version="$(lib::get_version)"
+    lib::ok "current image version is ${current_version}"
+    lib::info "updating version"
+    npm version "${version}"
+    new_version="$(lib::get_version)"
+    lib::ok "version updated from ${current_version} to ${new_version}"
+  fi
+  lib::info "cleaning up previous process and container"
+  docker kill openssl_ca &>/dev/null || true
+  docker rm openssl_ca &>/dev/null || true
+  lib::ok "cleanup done"
+  lib::info "building image"
+  if docker build --tag "openssl_ca:${new_version}" .; then
+    lib::ok "image successfully built"
+    return 0
+  else
+    lib::warn "there was an error building the image"
+    return 1
+  fi
+}
+main "$@"

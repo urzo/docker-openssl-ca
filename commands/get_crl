@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -eou pipefail
+IFS=$'\r\n'
+
+source /root/.bashrc
+
+main() {
+  cat /root/ca/intermediate/crl/intermediate.crl.pem
+}
+main

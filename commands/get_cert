@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -eou pipefail
+IFS=$'\r\n'
+
+source /root/.bashrc
+
+main() {
+  local NAME="${1:?"Require a certificate name"}"
+  local ROOT_DIR="/root/ca/intermediate/certs"
+  if [[ ! -r "$ROOT_DIR/$NAME.cert.pem" ]]; then
+    echo "certificate '$NAME' does not exist"
+    return 1
+  fi
+  cat "$ROOT_DIR/$NAME.cert.pem"
+  return 0
+}
+main "$@"

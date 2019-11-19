@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+set -eou pipefail
+IFS=$'\r\n'
+
+# shellcheck source="./lib.bash"
+source "./lib.bash"
+
+main() {
+  lib::check_install_homebrew
+  lib::check_install_brew_packages
+}
+main

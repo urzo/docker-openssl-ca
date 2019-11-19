@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -eou pipefail
+IFS=$'\r\n'
+
+source /root/.bashrc
+
+main() {
+  CERT="${1:?"Require certificate"}"
+  echo "$CERT" >/tmp/cert.pem
+  openssl x509 -noout -text -in /tmp/cert.pem
+  rm /tmp/cert.pem
+}
+main "$@"
